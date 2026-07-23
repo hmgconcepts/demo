@@ -56,8 +56,8 @@ window.SC.jsStr = function (s) { return JSON.stringify(String(s == null ? '' : s
 window.SC.slugify = function (s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); };
 
 // Supabase client initialisation — paste YOUR demo project URL + anon key above.
-const SUPABASE_URL = 'https://oithpfvmymxfqmmamofl.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9pdGhwZnZteW14ZnFtbWFtb2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3NzE5NjYsImV4cCI6MjEwMDM0Nzk2Nn0.8dkfzLV2A9d6jANj-iQmYvnDc82tYBq83S7BJi9-ynM';
+const SUPABASE_URL = 'https://dgarrlzbmscpgtefdupm.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnYXJybHpibXNjcGd0ZWZkdXBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMzc0MTYsImV4cCI6MjA5NzkxMzQxNn0.7CNB3KcQD3NHr6ENDGb7gRX_ld_xjgpQeL_YVuLRW_A';
 
 // Always expose safe globals so public/offline pages never throw ReferenceError.
 window.sb = null;

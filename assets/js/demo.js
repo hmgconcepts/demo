@@ -54,15 +54,17 @@
   /* Cause-specific, actionable fix guidance for the dashboard operator. */
   function hintFor(msg) {
     var m = (msg || '').toLowerCase();
+    if (/database error|unexpected_failure|querying schema|finding user/.test(m))
+      return 'The auth service rejects these SQL-created accounts (auth-table shape differs on this project version). Fix: run database/demo-users.sql v3, or create the five users in Supabase → Authentication → Users → "Add user" (auto-confirm ON, same emails + passwords), then re-run database/demo-seed.sql — it links by email, so any creation method works. See DEMO-SETUP.md.';
     if (/invalid login|invalid credentials|email or password/.test(m))
-      return 'These guest accounts are missing (or created with different passwords). Fix: Supabase SQL Editor → (re)run database/demo-users.sql v2 — it resets the passwords and FAILS VISIBLY if anything is wrong. Also confirm you ran it in the SAME project as the URL in assets/js/config.js.';
+      return 'These guest accounts are missing (or created with different passwords). Fix: Supabase SQL Editor → (re)run database/demo-users.sql v3 — it resets the passwords and FAILS VISIBLY if anything is wrong. Also confirm you ran it in the SAME project as the URL in assets/js/config.js.';
     if (/email not confirmed|confirm your email/.test(m))
-      return 'Emails must be pre-confirmed for direct-SQL accounts. Fix: re-run database/demo-users.sql v2 (it sets email_confirmed_at), or Supabase → Authentication → Sign In / Providers → Email → turn OFF "Confirm email".';
+      return 'Emails must be pre-confirmed for direct-SQL accounts. Fix: re-run database/demo-users.sql (it sets email_confirmed_at), or Supabase → Authentication → Sign In / Providers → Email → turn OFF "Confirm email".';
     if (/failed to fetch|network|load failed|fetcherror|err_failed/.test(m))
       return 'The site cannot reach Supabase. Check SUPABASE_URL + SUPABASE_ANON_KEY in assets/js/config.js belong to this demo project.';
     if (/paused|inactive|unavailable|503/.test(m))
       return 'The free Supabase project is paused (7-day inactivity rule). Open the Supabase dashboard and click "Restore project", then retry.';
-    return 'Open the browser console (F12) for the full error. Most causes are fixed by (re)running database/demo-users.sql v2 in the correct project — see DEMO-SETUP.md.';
+    return 'Open the browser console (F12) for the full error. Most causes are fixed by (re)running database/demo-users.sql in the correct project — see DEMO-SETUP.md.';
   }
 
   async function signInAs(acc) {

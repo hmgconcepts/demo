@@ -18,6 +18,24 @@
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
+-- 0) Resolve the five demo account ids BY EMAIL
+--    Works however the accounts were created: demo-users.sql (fixed UUIDs),
+--    Supabase Dashboard "Add user", or the Admin API (random UUIDs).
+--    Missing accounts simply degrade those links to NULL — the seed always
+--    completes; run demo-users.sql v3 (or Dashboard Add user) to fix login.
+-- ----------------------------------------------------------------------------
+-- Session-scoped (NOT `on commit drop`): the SQL Editor commits each statement
+-- separately, and this table must survive every statement of the whole run.
+create temporary table if not exists sc_demo_ids (role text primary key, id uuid);
+insert into sc_demo_ids (role, id) values
+  ('admin',   (select id from public.profiles where email='admin@scdemo.school'   limit 1)),
+  ('teacher', (select id from public.profiles where email='teacher@scdemo.school' limit 1)),
+  ('parent',  (select id from public.profiles where email='parent@scdemo.school'  limit 1)),
+  ('student', (select id from public.profiles where email='student@scdemo.school' limit 1)),
+  ('bursar',  (select id from public.profiles where email='bursar@scdemo.school'  limit 1))
+on conflict (role) do update set id = excluded.id;
+
+-- ----------------------------------------------------------------------------
 -- 0) Constants used everywhere (current period = Third Term 2025/2026)
 -- ----------------------------------------------------------------------------
 -- session: '2025/2026'  term: 'Third Term'  next term begins: 2026-09-07
@@ -98,7 +116,7 @@ begin
       insert into public.students (id, admission_no, full_name, class, arm, department, gender, date_of_birth, guardian_name, guardian_phone, address, campus, status, user_id)
       values (('d4000000-0000-4000-8000-00000000'||lpad(to_hex(n),4,'0'))::uuid,
               x[1], x[2], x[3], x[4], x[5], x[6], x[7]::date, x[8], x[9], '12 Demo Crescent, Lagos', 'Main Campus', 'active',
-              case when x[1]='SCD-00014' and exists (select 1 from public.profiles where id='d3000000-0000-4000-8000-0000000000a4') then 'd3000000-0000-4000-8000-0000000000a4'::uuid else null end);
+              case when x[1]='SCD-00014' then (select id from sc_demo_ids where role='student') else null end);
     end if;
   end loop;
 end $$;
@@ -123,7 +141,7 @@ begin
       values (('d5000000-0000-4000-8000-00000000'||lpad(to_hex(n),4,'0'))::uuid,
               x[1], x[2], x[3], '+234 805 222 00'||lpad(n::text,2,'0'), x[4], x[5],
               case when x[6] = '' then null else string_to_array(x[6], ', ')::text[] end, false, 'active',
-              case when x[1]='SCD-STF-00001' and exists (select 1 from public.profiles where id='d3000000-0000-4000-8000-0000000000a2') then 'd3000000-0000-4000-8000-0000000000a2'::uuid else null end);
+              case when x[1]='SCD-STF-00001' then (select id from sc_demo_ids where role='teacher') else null end);
     end if;
   end loop;
 end $$;
@@ -131,12 +149,11 @@ end $$;
 -- 6) Parent-child links: demo parent (a3) → Adanna (SS 2A) & Chiamaka (JSS 1A)
 do $$
 begin
-  if exists (select 1 from public.profiles where id='d3000000-0000-4000-8000-0000000000a3') then
     insert into public.parent_child (parent_id, student_id, relationship, verified)
-    select 'd3000000-0000-4000-8000-0000000000a3'::uuid, s.id, 'parent', true
-    from public.students s where s.admission_no in ('SCD-00014','SCD-00003')
+    select p.id, s.id, 'parent', true
+    from sc_demo_ids p, public.students s
+    where p.role='parent' and p.id is not null and s.admission_no in ('SCD-00014','SCD-00003')
     on conflict do nothing;
-  end if;
 end $$;
 
 -- 7) Class fee structures (Third Term 2025/2026) --------------------------------
@@ -184,7 +201,7 @@ begin
       insert into public.fee_payments (student_id, amount_paid, fee_total, method, reference, term, session, received_by)
       values (s.id, pay, s.total, case when idx%2=0 then 'Bank Transfer' else 'POS' end,
               'DEMO-PAY-2026-'||lpad(idx::text,3,'0'), 'Third Term', '2025/2026',
-              (select id from public.profiles where id='d3000000-0000-4000-8000-0000000000a5' limit 1));
+              (select id from sc_demo_ids where role='bursar'));
     end if;
   end loop;
 end $$;
@@ -299,7 +316,7 @@ do $$
 begin
   if not exists (select 1 from public.cbt_exams where code='DEMO-MATH1') then
     insert into public.cbt_exams (id, teacher_id, code, title, subject, class, term, session, topic, assessment_type, max_score, duration_min, attempt_limit, randomise, is_open, is_archived, pass_mark, release_results, instructions, certificate_enabled, questions)
-    values ('d6000000-0000-4000-8000-000000000001','d3000000-0000-4000-8000-0000000000a2',
+    values ('d6000000-0000-4000-8000-000000000001', coalesce((select id from sc_demo_ids where role='teacher'), (select id from public.profiles where role in ('admin','teacher') order by role limit 1)),
       'DEMO-MATH1','JSS 1 Mathematics Speed Test','Mathematics','JSS 1','Third Term','2025/2026','Number & Algebra','CA',
       100, 10, 1, true, true, false, 50, true,
       'Answer all questions. Each question carries 10 marks. No calculator.', true,
@@ -318,7 +335,7 @@ begin
   end if;
   if not exists (select 1 from public.cbt_exams where code='DEMO-ENG2') then
     insert into public.cbt_exams (id, teacher_id, code, title, subject, class, term, session, topic, assessment_type, max_score, duration_min, attempt_limit, randomise, is_open, is_archived, pass_mark, release_results, instructions, certificate_enabled, questions)
-    values ('d6000000-0000-4000-8000-000000000002','d3000000-0000-4000-8000-0000000000a2',
+    values ('d6000000-0000-4000-8000-000000000002', coalesce((select id from sc_demo_ids where role='teacher'), (select id from public.profiles where role in ('admin','teacher') order by role limit 1)),
       'DEMO-ENG2','SS 2 English Lexis & Structure','English Language','SS 2','Third Term','2025/2026','Lexis and Structure','Exam',
       100, 8, 2, false, true, false, 60, true,
       'Choose the option that best completes each sentence.', false,
@@ -399,11 +416,10 @@ begin
             '[{"id":"c1","name":"Mrs. Funke Alabi (Mathematics)"},{"id":"c2","name":"Mr. C. Nwachukwu (English)"},{"id":"c3","name":"Mrs. Hauwa Suleiman (Physics)"}]'::jsonb,
             false, true, 'all', 'open', null)
     returning id into pid;
-    insert into public.poll_votes (poll_id, candidate_id, voter_id) values
-      (pid,'c1','d3000000-0000-4000-8000-0000000000a2'),
-      (pid,'c1','d3000000-0000-4000-8000-0000000000a4'),
-      (pid,'c3','d3000000-0000-4000-8000-0000000000a3'),
-      (pid,'c1','d3000000-0000-4000-8000-0000000000a5')
+    insert into public.poll_votes (poll_id, candidate_id, voter_id)
+    select pid, case d.role when 'parent' then 'c3' else 'c1' end, d.id
+    from sc_demo_ids d
+    where d.role in ('teacher','student','parent','bursar') and d.id is not null
     on conflict do nothing;
   end if;
 end $$;
@@ -427,9 +443,9 @@ declare
 begin
   if adanna is not null and (select count(*) from public.student_diary) < 3 then
     insert into public.student_diary (student_id, student_name, class, subject, date, entry_type, title, body, created_by) values
-      (adanna,'Adanna Okafor','SS 2 A','English Language',current_date - 1,'homework','Essay assignment reminder','Adanna is to submit her argumentative essay on Friday. Please ensure she revises the outline shared in class.','d3000000-0000-4000-8000-0000000000a2'),
-      (chiamaka,'Chiamaka Eze','JSS 1 A','Mathematics',current_date - 2,'commendation','Excellent mental maths today','Chiamaka answered five mental-maths questions correctly in class today. Well done!','d3000000-0000-4000-8000-0000000000a2'),
-      (adanna,'Adanna Okafor','SS 2 A','Class Teacher',current_date - 5,'general','Reading culture','Encourage Adanna to complete the class novel before the literature quiz next week.','d3000000-0000-4000-8000-0000000000a2');
+      (adanna,'Adanna Okafor','SS 2 A','English Language',current_date - 1,'homework','Essay assignment reminder','Adanna is to submit her argumentative essay on Friday. Please ensure she revises the outline shared in class.',coalesce((select id from sc_demo_ids where role='teacher'), (select id from public.profiles where role in ('admin','teacher') order by role limit 1))),
+      (chiamaka,'Chiamaka Eze','JSS 1 A','Mathematics',current_date - 2,'commendation','Excellent mental maths today','Chiamaka answered five mental-maths questions correctly in class today. Well done!',coalesce((select id from sc_demo_ids where role='teacher'), (select id from public.profiles where role in ('admin','teacher') order by role limit 1))),
+      (adanna,'Adanna Okafor','SS 2 A','Class Teacher',current_date - 5,'general','Reading culture','Encourage Adanna to complete the class novel before the literature quiz next week.',coalesce((select id from sc_demo_ids where role='teacher'), (select id from public.profiles where role in ('admin','teacher') order by role limit 1)));
   end if;
   if (select count(*) from public.conduct) < 3 then
     insert into public.conduct (student_id, type, description, reporter, date) values
@@ -476,7 +492,7 @@ begin
   end if;
   if (select count(*) from public.helpdesk_tickets) = 0 then
     insert into public.helpdesk_tickets (submitted_by, category, subject, body, priority, status)
-    values ('d3000000-0000-4000-8000-0000000000a2','Facilities','Projector in SS 2 A not displaying','The classroom projector powers on but shows no image. Tried HDMI and VGA cables. Needed for Friday revision class.','normal','open');
+    values (coalesce((select id from sc_demo_ids where role='teacher'), (select id from public.profiles where role in ('admin','teacher') order by role limit 1)),'Facilities','Projector in SS 2 A not displaying','The classroom projector powers on but shows no image. Tried HDMI and VGA cables. Needed for Friday revision class.','normal','open');
   end if;
   if (select count(*) from public.hostel_allocations) = 0 then
     insert into public.hostel_allocations (student_id, block, room, bed, status) values

@@ -1,5 +1,5 @@
 -- ============================================================================
--- SCHOOL CONNECT DEMO — GUEST ACCOUNTS  v2  (run AFTER complete-schema.sql)
+-- SCHOOL CONNECT DEMO — GUEST ACCOUNTS  v3  (run AFTER complete-schema.sql)
 -- ----------------------------------------------------------------------------
 -- Creates / repairs the five one-tap "Explore as Guest" accounts used by the
 -- demo deployment (assets/js/demo.js).  Passwords (public on the demo login
@@ -9,6 +9,13 @@
 --   parent@scdemo.school  Demo#Parent1  → role: parent  (linked to 2 demo kids)
 --   student@scdemo.school Demo#Study1   → role: student (linked student record)
 --   bursar@scdemo.school  Demo#Bursar1  → role: bursar
+--
+-- v3 (2026-07-23) — adds hosted-Supabase auth-row parity:
+--   • instance_id is NULL (the shape GoTrue writes on current hosted projects;
+--     older/self-hosted projects also accept NULL — the zero-uuid era is over).
+--   • NOTE: on the newest hosted projects the public *signup* API may reject
+--     @scdemo.school (domain validation) — Dashboard "Add user" and this SQL are
+--     NOT affected and remain the supported way to create demo accounts.
 --
 -- v2 (2026-07-22) — hardened against every silent failure seen in the field:
 --   • search_path set explicitly (pgcrypto lives in the `extensions` schema on
@@ -68,34 +75,50 @@ begin
         email_confirmed_at, created_at, updated_at,
         raw_app_meta_data, raw_user_meta_data
       ) values (
-        '00000000-0000-0000-0000-000000000000', a[1]::uuid, 'authenticated', 'authenticated', a[2],
+        null, a[1]::uuid, 'authenticated', 'authenticated', a[2],
         crypt(a[3], gen_salt('bf')), now(), now(), now(),
         '{"provider":"email","providers":["email"]}'::jsonb,
         jsonb_build_object('full_name', a[4], 'demo', true, 'role', roles_c[i])
       );
     end if;
 
-    -- 2) SELF-HEAL credentials: correct password + confirmed email, every run.
+    -- 2) SELF-HEAL credentials + shape: correct password, confirmed email and
+    --    the hosted-parity instance_id (NULL), every run.
     update auth.users
        set encrypted_password = crypt(a[3], gen_salt('bf')),
            email_confirmed_at = coalesce(email_confirmed_at, now()),
+           instance_id = null,
            aud = 'authenticated', role = 'authenticated',
            updated_at = now()
      where id = a[1]::uuid;
 
-    -- 3) auth.identities (GoTrue requires a matching email identity to log in)
-    insert into auth.identities (
-      id, user_id, provider_id, provider, identity_data,
-      last_sign_in_at, created_at, updated_at
-    ) values (
-      a[1]::uuid, a[1]::uuid, a[1]::text, 'email',
-      jsonb_build_object('sub', a[1], 'email', a[2], 'email_verified', true, 'phone_verified', false),
-      now(), now(), now()
-    )
-    on conflict (provider_id, provider) do update
-       set user_id = excluded.user_id,
-           identity_data = excluded.identity_data,
-           updated_at = now();
+    -- 3) auth.identities (GoTrue requires a matching email identity to log in).
+    --    Modern Supabase: unique(provider_id, provider) → upsert. Older shapes:
+    --    plain fallback insert (still verified by the end-check below).
+    begin
+      insert into auth.identities (
+        id, user_id, provider_id, provider, identity_data,
+        last_sign_in_at, created_at, updated_at
+      ) values (
+        a[1]::uuid, a[1]::uuid, a[1]::text, 'email',
+        jsonb_build_object('sub', a[1], 'email', a[2], 'email_verified', true, 'phone_verified', false),
+        now(), now(), now()
+      )
+      on conflict (provider_id, provider) do update
+         set user_id = excluded.user_id,
+             identity_data = excluded.identity_data,
+             updated_at = now();
+    exception when others then
+      insert into auth.identities (
+        id, user_id, provider_id, provider, identity_data,
+        last_sign_in_at, created_at, updated_at
+      ) values (
+        a[1]::uuid, a[1]::uuid, a[1]::text, 'email',
+        jsonb_build_object('sub', a[1], 'email', a[2], 'email_verified', true, 'phone_verified', false),
+        now(), now(), now()
+      )
+      on conflict do nothing;
+    end;
 
     -- 4) portal profile (role + approved status drive the whole UI).
     --    UPSERT — repairs rows pre-created by the handle_new_user() trigger

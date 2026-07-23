@@ -24,11 +24,11 @@
 
   /* Demo accounts — created by database/demo-users.sql (DEMO-SETUP.md). */
   var ACCOUNTS = [
-    { role: 'Admin',   icon: '🛡️', email: 'admin@scdemo.school',   pass: 'Demo#Admin1',  see: 'Everything: setup, approvals, analytics, fees, license…' },
-    { role: 'Teacher', icon: '👩‍🏫', email: 'teacher@scdemo.school', pass: 'Demo#Teach1',  see: 'Attendance, results, CBT exams, lesson plans, classroom…' },
-    { role: 'Parent',  icon: '👨‍👩‍👧', email: 'parent@scdemo.school',  pass: 'Demo#Parent1', see: 'Only her two children: results, fees, attendance, diary…' },
-    { role: 'Student', icon: '🎓', email: 'student@scdemo.school', pass: 'Demo#Study1',  see: 'Own records, CBT exam portal, timetable, assignments…' },
-    { role: 'Bursar',  icon: '💼', email: 'bursar@scdemo.school',  pass: 'Demo#Bursar1', see: 'Fee structures, payments, receipts, finance reports…' }
+    { role: 'Admin',   icon: '🛡️', email: 'admin@gmail.com',   pass: 'Demo#Admin1',  see: 'Everything: setup, approvals, analytics, fees, license…' },
+    { role: 'Teacher', icon: '👩‍🏫', email: 'teacher@gmail.com', pass: 'Demo#Teach1',  see: 'Attendance, results, CBT exams, lesson plans, classroom…' },
+    { role: 'Parent',  icon: '👨‍👩‍👧', email: 'parent@gmail.com',  pass: 'Demo#Parent1', see: 'Only her two children: results, fees, attendance, diary…' },
+    { role: 'Student', icon: '🎓', email: 'student@gmail.com', pass: 'Demo#Study1',  see: 'Own records, CBT exam portal, timetable, assignments…' },
+    { role: 'Bursar',  icon: '💼', email: 'bursar@gmail.com',  pass: 'Demo#Bursar1', see: 'Fee structures, payments, receipts, finance reports…' }
   ];
 
   function toast(msg, opts) {

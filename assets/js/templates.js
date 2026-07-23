@@ -350,7 +350,7 @@ ${T.setupRequiredBanner()}
       'students','classes','subjects','attendance','results','report_cards','academic_records',
       'cbt','cbt_prompts','entrance','assignments','timetable','timetable_generator','sow',
       'lesson_plans','library','digital_library','eresources','announcements','events','messages','inbox',
-      'complaints','broadcast','diary','checkin','checkin_staff','checkin-staff','behaviour','conduct','health','support_plans',
+      'complaints','broadcast','diary','checkin','checkin_staff','checkin-staff','punctuality','behaviour','conduct','health','support_plans',
       'certificates','reports','directory','rubrics','counselling','substitutions','helpdesk','book_request', 'ecosystem_products','hmg_digital_products'
     ]);
     const parentSet = new Set([
@@ -386,7 +386,7 @@ ${T.setupRequiredBanner()}
       activity_log:'🧮', lesson_plans:'🗒️', behaviour:'🏅', support_plans:'🧩',
       donations:'💝', substitutions:'🔁', helpdesk:'🆘', payments_online:'💳', notifications:'🔔',
       'report_cards':'🧾', 'admin-data':'🗄️', flyer:'📰', approvals:'✅', 'timetable-generator':'🗓️', checkin:'📲', 'checkin-staff':'⏰', 'checkin_staff':'⏰', diary:'📔', surveys:'🗒️', menu:'🍽️', settings:'⚙️',
-      digital_library:'📚', 'cbt-prompts':'🧩', entrance:'🎯', storage:'🗄️', developer:'👨‍💻', ecosystem:'🌐', ecosystem_products:'🌐',
+      digital_library:'📚', 'cbt-prompts':'🧩', entrance:'🎯', storage:'🗄️', developer:'👨‍💻', ecosystem:'🌐', ecosystem_products:'🌐', punctuality:'⏱️',
       payroll:'🧾', staff_loans:'🏦', staff_bonus:'🎁', appraisals:'⭐', 'student-profile':'👤', academic_records:'📄',
       affective_traits:'⭐', psychomotor_traits:'🏃', report_comments:'💬',
       rubrics:'📐', transcripts:'🎓', transfer_cert:'📄', counselling:'💬'
@@ -400,7 +400,7 @@ ${T.setupRequiredBanner()}
     const map = {
       dashboard:'Dashboard', about:'About', contact:'Contact', apply:'Apply', 'feature-guide':'Feature Guide', 'verify-certificate':'Verify Certificate', 'teacher-overview':'Teacher Overview', 'cbt-exam':'Take Exam', 'cbt-multi':'Multi-Subject CBT', profile:'My Profile', 'change-password':'Change Password', 'student-profile':'Student Profile', academic_records:'Academic Records', academic_setup:'Academic Setup', students:'Students', staff:'Staff', classes:'Classes',
       ecosystem_products:'HMG Ecosystem', ecosystem:'HMG Ecosystem', hmg_digital_products:'HMG Digital Products', school_fees:'School Fee Structure', school_products:'School Products', status_manager:'Role & Status Manager',
-      attendance:'Attendance', results:'Results', timetable:'Timetable',
+      attendance:'Attendance', punctuality:'Punctuality', results:'Results', timetable:'Timetable',
       'timetable-generator':'Auto-Timetable', sow:'Scheme', cbt:'CBT', assignments:'Assignments',
       library:'Library', conduct:'Conduct', health:'Health', promotion:'Promotion',
       fees:'Fees', finance:'Finance', leave:'Leave', visitors:'Visitors', transport:'Transport',

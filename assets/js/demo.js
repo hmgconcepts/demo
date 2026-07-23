@@ -22,13 +22,16 @@
   var D = (window.SCHOOL && window.SCHOOL.demo) || {};
   if (!D.enabled) return;
 
-  /* Demo accounts — created by database/demo-users.sql (DEMO-SETUP.md). */
+  /* Demo accounts — created in the Supabase Dashboard ("Add user", Auto Confirm
+     ON) and approved by database/demo-users.sql v6 (DEMO-SETUP.md). On the
+     newest hosted GoTrue, Dashboard-created accounts always log in while
+     SQL-created auth rows cannot — so v6 never creates users in SQL. */
   var ACCOUNTS = [
-    { role: 'Admin',   icon: '🛡️', email: 'admin@gmail.com',   pass: 'Demo#Admin1',  see: 'Everything: setup, approvals, analytics, fees, license…' },
-    { role: 'Teacher', icon: '👩‍🏫', email: 'teacher@gmail.com', pass: 'Demo#Teach1',  see: 'Attendance, results, CBT exams, lesson plans, classroom…' },
-    { role: 'Parent',  icon: '👨‍👩‍👧', email: 'parent@gmail.com',  pass: 'Demo#Parent1', see: 'Only her two children: results, fees, attendance, diary…' },
-    { role: 'Student', icon: '🎓', email: 'student@gmail.com', pass: 'Demo#Study1',  see: 'Own records, CBT exam portal, timetable, assignments…' },
-    { role: 'Bursar',  icon: '💼', email: 'bursar@gmail.com',  pass: 'Demo#Bursar1', see: 'Fee structures, payments, receipts, finance reports…' }
+    { role: 'Admin',   icon: '🛡️', email: 'admin@scdemo.school',   pass: 'Demo#Admin1',  see: 'Everything: setup, approvals, analytics, fees, license…' },
+    { role: 'Teacher', icon: '👩‍🏫', email: 'teacher@scdemo.school', pass: 'Demo#Teach1',  see: 'Attendance, results, CBT exams, lesson plans, classroom…' },
+    { role: 'Parent',  icon: '👨‍👩‍👧', email: 'parent@scdemo.school',  pass: 'Demo#Parent1', see: 'Only her two children: results, fees, attendance, diary…' },
+    { role: 'Student', icon: '🎓', email: 'student@scdemo.school', pass: 'Demo#Study1',  see: 'Own records, CBT exam portal, timetable, assignments…' },
+    { role: 'Bursar',  icon: '💼', email: 'bursar@scdemo.school',  pass: 'Demo#Bursar1', see: 'Fee structures, payments, receipts, finance reports…' }
   ];
 
   function toast(msg, opts) {
@@ -55,11 +58,11 @@
   function hintFor(msg) {
     var m = (msg || '').toLowerCase();
     if (/database error|unexpected_failure|querying schema|finding user/.test(m))
-      return 'The auth service rejects these SQL-created accounts (auth-table shape differs on this project version). Fix: run database/demo-users.sql v5, or create the five users in Supabase → Authentication → Users → "Add user" (auto-confirm ON, same emails + passwords), then re-run database/demo-seed.sql — it links by email, so any creation method works. See DEMO-SETUP.md.';
+      return 'The auth service is choking on an old SQL-created auth row. Fix: Supabase Dashboard → Authentication → Users → delete the broken demo user, re-create it with \"Add user\" (same email + password from DEMO-SETUP.md, Auto Confirm ON), then run database/demo-users.sql v6 to approve its profile. See DEMO-SETUP.md.';
     if (/invalid login|invalid credentials|email or password/.test(m))
-      return 'These guest accounts are missing (or created with different passwords). Fix: Supabase SQL Editor → (re)run database/demo-users.sql v5 — it resets the passwords and FAILS VISIBLY if anything is wrong. Also confirm you ran it in the SAME project as the URL in assets/js/config.js.';
+      return 'This guest account is missing or its password differs. Fix: Dashboard → Authentication → Users → create it (or Edit user → set the password to the one shown on the login panel / DEMO-SETUP.md), Auto Confirm ON — then run database/demo-users.sql v6 in the SAME project as the URL in assets/js/config.js to approve the profile.';
     if (/email not confirmed|confirm your email/.test(m))
-      return 'Emails must be pre-confirmed for direct-SQL accounts. Fix: re-run database/demo-users.sql (it sets email_confirmed_at), or Supabase → Authentication → Sign In / Providers → Email → turn OFF "Confirm email".';
+      return 'Emails must be pre-confirmed for guest accounts. Fix: re-run database/demo-users.sql v6 (it confirms them), or Dashboard → Users → Edit user → Confirm email, or Auth → Providers → Email → turn OFF "Confirm email".';
     if (/failed to fetch|network|load failed|fetcherror|err_failed/.test(m))
       return 'The site cannot reach Supabase. Check SUPABASE_URL + SUPABASE_ANON_KEY in assets/js/config.js belong to this demo project.';
     if (/paused|inactive|unavailable|503/.test(m))

@@ -31,20 +31,57 @@
     { role: 'Bursar',  icon: '💼', email: 'bursar@scdemo.school',  pass: 'Demo#Bursar1', see: 'Fee structures, payments, receipts, finance reports…' }
   ];
 
-  function toast(msg) {
+  function toast(msg, opts) {
+    var o = opts || {};
     var t = document.createElement('div');
-    t.style.cssText = 'position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 18px;border-radius:999px;font:600 13px system-ui;z-index:2147483000;box-shadow:0 8px 30px rgba(0,0,0,.35)';
-    t.textContent = msg; document.body.appendChild(t); setTimeout(function(){ t.remove(); }, 2600);
+    t.style.cssText = 'position:fixed;bottom:18px;left:50%;transform:translateX(-50%);max-width:min(92vw,560px);text-align:center;background:' +
+      (o.err ? '#7f1d1d' : '#0f172a') + ';color:#fff;padding:10px 18px;border-radius:' + (o.err ? '12px' : '999px') +
+      ';font:600 13px/1.45 system-ui;z-index:2147483000;box-shadow:0 8px 30px rgba(0,0,0,.35)';
+    t.textContent = msg; document.body.appendChild(t); setTimeout(function(){ t.remove(); }, o.err ? 9000 : 2600);
+  }
+
+  /* Turn any Supabase/Auth error into a human-readable string (error objects
+     often stringify to "{}" — so dig through every known shape). */
+  function errMsg(err) {
+    if (!err) return 'unknown error';
+    if (typeof err === 'string') return err;
+    var m = err.message || err.error_description || err.msg || err.code;
+    if (m) return String(m);
+    try { var s = JSON.stringify(err, Object.getOwnPropertyNames(err)); if (s && s !== '{}') return s; } catch (e) {}
+    try { return String(err.status ? ('HTTP ' + err.status) : Object.prototype.toString.call(err)); } catch (e2) { return 'unknown error'; }
+  }
+
+  /* Cause-specific, actionable fix guidance for the dashboard operator. */
+  function hintFor(msg) {
+    var m = (msg || '').toLowerCase();
+    if (/invalid login|invalid credentials|email or password/.test(m))
+      return 'These guest accounts are missing (or created with different passwords). Fix: Supabase SQL Editor → (re)run database/demo-users.sql v2 — it resets the passwords and FAILS VISIBLY if anything is wrong. Also confirm you ran it in the SAME project as the URL in assets/js/config.js.';
+    if (/email not confirmed|confirm your email/.test(m))
+      return 'Emails must be pre-confirmed for direct-SQL accounts. Fix: re-run database/demo-users.sql v2 (it sets email_confirmed_at), or Supabase → Authentication → Sign In / Providers → Email → turn OFF "Confirm email".';
+    if (/failed to fetch|network|load failed|fetcherror|err_failed/.test(m))
+      return 'The site cannot reach Supabase. Check SUPABASE_URL + SUPABASE_ANON_KEY in assets/js/config.js belong to this demo project.';
+    if (/paused|inactive|unavailable|503/.test(m))
+      return 'The free Supabase project is paused (7-day inactivity rule). Open the Supabase dashboard and click "Restore project", then retry.';
+    return 'Open the browser console (F12) for the full error. Most causes are fixed by (re)running database/demo-users.sql v2 in the correct project — see DEMO-SETUP.md.';
   }
 
   async function signInAs(acc) {
-    if (!window.sb) { toast('Demo database not configured yet — see DEMO-SETUP.md'); return; }
+    if (!window.sb) { toast('Demo database not configured yet — fill SUPABASE_URL + anon key in assets/js/config.js (DEMO-SETUP.md step 2).', { err: true }); return; }
     toast('Signing in as demo ' + acc.role + '…');
     try {
       var r = await sb.auth.signInWithPassword({ email: acc.email, password: acc.pass });
-      if (r.error) { toast('Demo login failed: ' + r.error.message + ' — run database/demo-users.sql first.'); return; }
+      if (r.error) {
+        var m = errMsg(r.error);
+        console.warn('[demo] sign-in error for', acc.email, r.error);
+        toast('Demo login failed: ' + m + '. ' + hintFor(m), { err: true });
+        return;
+      }
       location.href = 'dashboard.html';
-    } catch (e) { toast('Demo login failed: ' + (e.message || e)); }
+    } catch (e) {
+      var m2 = errMsg(e);
+      console.warn('[demo] sign-in threw for', acc.email, e);
+      toast('Demo login failed: ' + m2 + '. ' + hintFor(m2), { err: true });
+    }
   }
 
   function isLoginPage() {

@@ -22,19 +22,21 @@
 --    Works however the accounts were created: demo-users.sql (fixed UUIDs),
 --    Supabase Dashboard "Add user", or the Admin API (random UUIDs).
 --    Missing accounts simply degrade those links to NULL — the seed always
---    completes; run demo-users.sql v4 (or Dashboard Add user) to fix login.
---    Account emails are @gmail.com — newest hosted GoTrue rejects
---    non-resolvable domains (e.g. @scdemo.school) everywhere.
+--    completes; run demo-users.sql v6 (after Dashboard Add user × 5) to approve the profiles.
+--    Account emails are @scdemo.school — created via Dashboard "Add user"
+--    (v6 rationale: dashboard-created accounts log in perfectly on the
+--    newest GoTrue; SQL-created auth rows cannot; login itself never
+--    validates domains — only the public signup API does).
 -- ----------------------------------------------------------------------------
 -- Session-scoped (NOT `on commit drop`): the SQL Editor commits each statement
 -- separately, and this table must survive every statement of the whole run.
 create temporary table if not exists sc_demo_ids (role text primary key, id uuid);
 insert into sc_demo_ids (role, id) values
-  ('admin',   (select id from public.profiles where email='admin@gmail.com'   limit 1)),
-  ('teacher', (select id from public.profiles where email='teacher@gmail.com' limit 1)),
-  ('parent',  (select id from public.profiles where email='parent@gmail.com'  limit 1)),
-  ('student', (select id from public.profiles where email='student@gmail.com' limit 1)),
-  ('bursar',  (select id from public.profiles where email='bursar@gmail.com'  limit 1))
+  ('admin',   (select id from public.profiles where email='admin@scdemo.school'   limit 1)),
+  ('teacher', (select id from public.profiles where email='teacher@scdemo.school' limit 1)),
+  ('parent',  (select id from public.profiles where email='parent@scdemo.school'  limit 1)),
+  ('student', (select id from public.profiles where email='student@scdemo.school' limit 1)),
+  ('bursar',  (select id from public.profiles where email='bursar@scdemo.school'  limit 1))
 on conflict (role) do update set id = excluded.id;
 
 -- ----------------------------------------------------------------------------

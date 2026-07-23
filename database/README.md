@@ -13,6 +13,21 @@ Files:
 
 - `demo-users.sql` / `demo-seed.sql` — demo-deployment guest accounts + simulated school (see DEMO-SETUP.md in a demo ZIP).
 - `cbt-1000-scale.sql` — **optional additive pack** for projects already on v12.x: idempotent CBT submissions (client_ref), the v2 exam-fetch/submit functions and hot-path indexes so **1000 students can write one exam simultaneously**. Included inside `complete-schema.sql` from v12.3 onward, so fresh installs already have it.
+- `punctuality-points.sql` — **optional additive pack** for projects already on v12.1–v12.3: the **Punctuality Points engine** (daily punctuality awards from student check-in/out data, plus the optional one-click push of term points into `results`). Included inside `complete-schema.sql` from v12.4 onward, so fresh installs already have it.
+
+## v12.4 patch — Punctuality Points engine + results-columns fix (2026-07-23)
+Section 17 of the schema ships the punctuality engine: `punctuality_config`
+(editable rule: first check-in ≤ deadline AND last checkout ≥ closing → points),
+`punctuality_awards` (unique per student+date, re-gradeable),
+`compute_punctuality_awards(date, class)` and
+`sc_push_punctuality_to_results(term, session, column, class, range)` — an
+IDEMPOTENT upsert into `results` (deterministic `assessment_ref`,
+information_schema-validated numeric column, manual rows never matched). This
+run also force-adds the four enhanced `results` columns (`student_id_ref`,
+`student_name`, `assessment_source`, `assessment_ref`) + `results_assessment_uidx`,
+fixing a latent 42703 the punctuality/CTB pushes could hit on databases installed
+fresh from earlier v12.x builds. For live projects already on v12.1–v12.3, run
+`database/punctuality-points.sql` once — same content, standalone.
 
 ## v12.3 patch — CBT 1000-concurrent scale pack (2026-07-23)
 Section 16 of the schema now ships the scale pack: submissions are IDEMPOTENT

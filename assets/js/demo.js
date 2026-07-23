@@ -55,9 +55,9 @@
   function hintFor(msg) {
     var m = (msg || '').toLowerCase();
     if (/database error|unexpected_failure|querying schema|finding user/.test(m))
-      return 'The auth service rejects these SQL-created accounts (auth-table shape differs on this project version). Fix: run database/demo-users.sql v3, or create the five users in Supabase → Authentication → Users → "Add user" (auto-confirm ON, same emails + passwords), then re-run database/demo-seed.sql — it links by email, so any creation method works. See DEMO-SETUP.md.';
+      return 'The auth service rejects these SQL-created accounts (auth-table shape differs on this project version). Fix: run database/demo-users.sql v5, or create the five users in Supabase → Authentication → Users → "Add user" (auto-confirm ON, same emails + passwords), then re-run database/demo-seed.sql — it links by email, so any creation method works. See DEMO-SETUP.md.';
     if (/invalid login|invalid credentials|email or password/.test(m))
-      return 'These guest accounts are missing (or created with different passwords). Fix: Supabase SQL Editor → (re)run database/demo-users.sql v3 — it resets the passwords and FAILS VISIBLY if anything is wrong. Also confirm you ran it in the SAME project as the URL in assets/js/config.js.';
+      return 'These guest accounts are missing (or created with different passwords). Fix: Supabase SQL Editor → (re)run database/demo-users.sql v5 — it resets the passwords and FAILS VISIBLY if anything is wrong. Also confirm you ran it in the SAME project as the URL in assets/js/config.js.';
     if (/email not confirmed|confirm your email/.test(m))
       return 'Emails must be pre-confirmed for direct-SQL accounts. Fix: re-run database/demo-users.sql (it sets email_confirmed_at), or Supabase → Authentication → Sign In / Providers → Email → turn OFF "Confirm email".';
     if (/failed to fetch|network|load failed|fetcherror|err_failed/.test(m))

@@ -169,7 +169,12 @@ const CBT = {
     return { log, stop(){ handlers.forEach(([ev,h,target]) => (target||window).removeEventListener(ev,h)); const wm=document.getElementById('cbt-watermark'); if(wm) wm.remove(); } };
   },
 
-  async listExams() { if (!this._sb) return {data:null,error:{message:'Database not configured'}}; return await this._sb.from('cbt_exams').select('*').order('created_at',{ascending:false}).limit(100); },
+  // ENTERPRISE V14 (issue 44): the manager list deliberately EXCLUDES the two
+  // heavy jsonb question columns (csv_data/questions). A school with 100 exams
+  // × a 200 KB question bank used to download ~20 MB on every page open; the
+  // slim list is a few KB. Full rows are still fetched per-exam whenever the
+  // teacher edits, previews, exports or appends questions.
+  async listExams() { if (!this._sb) return {data:null,error:{message:'Database not configured'}}; return await this._sb.from('cbt_exams').select('id,code,title,subject,class,term,session,assessment_type,report_column,max_score,duration,duration_min,attempt_limit,select_count,randomise,negative_mark,exam_mode,is_open,is_archived,is_entrance,pass_mark,release_results,anti_cheat_config,certificate_enabled,start_at,close_at,teacher_id,created_at,updated_at').order('created_at',{ascending:false}).limit(100); },
   async createExam(exam) { if (!this._sb) return {data:null,error:{message:'Database not configured'}}; exam = exam || {}; exam.code = (exam.code || this._generateCode(6)).toUpperCase(); exam.created_at = new Date().toISOString(); if (!exam.teacher_id && window.SC_PROFILE && SC_PROFILE.id) exam.teacher_id = SC_PROFILE.id; exam.anti_cheat_config = Object.assign({tab_switch:true,window_blur:true,copy_paste:true,right_click:true,fullscreen:true,watermark:true,devtools:true,max_violations:5}, exam.anti_cheat_config || {}); return await this._sb.from('cbt_exams').insert(exam).select().single(); },
   _generateCode(len) { const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let r=''; for(let i=0;i<len;i++) r+=chars.charAt(Math.floor(Math.random()*chars.length)); return r; },
 
